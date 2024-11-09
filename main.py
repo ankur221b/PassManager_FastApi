@@ -3,9 +3,17 @@ from cryptography.fernet import Fernet
 from fastapi.responses import JSONResponse
 import pymongo
 from mangum import Mangum
+from fastapi.middleware.cors import CORSMiddleware
 from models import GetPasswordReq, SetPasswordReq, User
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 handler = Mangum(app)
 
 
@@ -95,6 +103,18 @@ async def signup(request: User):
 
     return JSONResponse(status_code=200)
 
+@app.post("/getsites")
+def GetSites(request:User):
+    collection = GetMongoCollection("PassData")
+    result = collection.find({"username":request.username})
+    sites = []
+    for site in list(result):
+        sites.append(site.get("site"))
+    data ={
+        "message":"success",
+        "data":sites
+    }
+    return JSONResponse(content=data,status_code=200)
 
 def GetUser(username):
     collection = GetMongoCollection("Users")
